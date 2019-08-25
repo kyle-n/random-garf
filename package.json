@@ -1,0 +1,27 @@
+{
+  "name": "random-garf",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/server.js",
+  "scripts": {
+    "start": "tsc && nodemon dist/server.js",
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "arraybuffer-to-buffer": "0.0.7",
+    "cross-fetch": "^3.0.4",
+    "dotenv": "^8.1.0",
+    "express": "^4.17.1",
+    "imgur-uploader": "^4.2.1",
+    "month-days": "^3.0.0",
+    "nodemon": "^1.19.1",
+    "rxjs": "^6.5.2",
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.17.1",
+    "@types/express": "^4.17.1",
+    "typescript": "^3.5.3"
+  }
+}
