@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/node": "^12.7.2",
     "arraybuffer-to-buffer": "0.0.7",
     "cross-fetch": "^3.0.4",
     "dotenv": "^8.1.0",
@@ -23,7 +24,6 @@
   "devDependencies": {
     "@types/body-parser": "^1.17.1",
     "@types/express": "^4.17.1",
-    "@types/node": "^12.7.2",
     "typescript": "^3.5.3"
   }
 }
