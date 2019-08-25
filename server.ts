@@ -2,9 +2,12 @@
 import dotenv from 'dotenv';
 dotenv.config({ path: __dirname + '/.env' });
 import monthDays from 'month-days';
-import blobToBase64 from 'blob-to-base64';
 import Twit from 'twit';
 import imgurUploader from 'imgur-uploader';
+import fetch from 'cross-fetch';
+import {Request} from 'cross-fetch';
+import arrayBufferToBuffer from 'arraybuffer-to-buffer';
+import fs from 'fs';
 
 // rxjs
 import { Observable, interval, from, zip, of} from 'rxjs';
@@ -62,15 +65,12 @@ const imgReq: Observable<Response> = randomDate.pipe(
     const twoNumberMonth: string = nonZeroIndexMonth.toString(10).length === 1 ? '0' + nonZeroIndexMonth : nonZeroIndexMonth.toString(10);
     return `https://d1ejxu6vysztl5.cloudfront.net/comics/garfield/${currentYear}/${date.getFullYear()}-${twoNumberMonth}-${date.getDate()}.gif`;
   }),
-  flatMap(imgUrl => from(fetch(imgUrl)))
+  flatMap(imgUrl => from(fetch(imgUrl))),
 );
-const imgFile: Observable<File> = imgReq.pipe(
-  flatMap(resp => from(resp.blob())),
-  map(blob => {
-    const b: any = blob;
-    b.lastModifiedDate = new Date();
-    b.name = randomFilename();
-    return <File>blob;
+const imgFile: Observable<Buffer> = imgReq.pipe(
+  flatMap(resp => from(resp.arrayBuffer())),
+  map(ab => {
+    return <Buffer>(arrayBufferToBuffer(ab));
   })
 );
 
@@ -87,8 +87,8 @@ const imgurUpload: Observable<ImgurResponse> = zip(
 ).pipe(
   flatMap(inputs => {
     const date: Date = inputs[0];
-    const file: File = inputs[1];
-    return from(imgurUploader(file, {title: 'Garfield ' + toYYMMDD(date)}));
+    const buffer: Buffer = inputs[1];
+    return from(imgurUploader(buffer, {title: 'Garfield ' + toYYMMDD(date)}));
   }),
   map(resp => <ImgurResponse>resp)
 );
@@ -114,29 +114,3 @@ iftttUpload.subscribe(
   console.log
 );
 
-/*
-const mediaId: Observable<string> = imgReq.pipe(
-  map(blob => blobToBase64(blob)),
-  flatMap(b64content => from(T.post('media/upload', { media_data: b64content }))),
-  tap(resp => console.log(resp, 'twitter resp')),
-  map((data: {media_id_string: string}) => data.media_id_string)
-);
-const createMetadataRequest: Observable<any> = mediaId.pipe(
-  flatMap(mediaId => {
-      const altText = "Ha ha, classic Garfield"
-      const meta_params = { media_id: mediaId, alt_text: { text: altText } }
-
-      return from(T.post('media/metadata/create', meta_params));
-  })
-);
-const tweetPost: Observable<any> = zip(
-  mediaId,
-  createMetadataRequest
-).pipe(
-  flatMap(inputs => {
-    const mediaId: string = inputs[0];
-    const params = { status: 'loving life #nofilter', media_ids: [mediaId] };
-    return from(T.post('statuses/update', params));
-  })
-);
-*/
