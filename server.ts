@@ -8,8 +8,8 @@ import {Request} from 'cross-fetch';
 import arrayBufferToBuffer from 'arraybuffer-to-buffer';
 
 // rxjs
-import { Observable, interval, from, zip} from 'rxjs';
-import { flatMap, map, share, startWith } from 'rxjs/operators';
+import { Observable, interval, from, zip, timer, merge} from 'rxjs';
+import { flatMap, map, share } from 'rxjs/operators';
 
 // metadata
 const minYear = 1978;
@@ -26,12 +26,12 @@ const randomIntegerInclusive = (first: number, second?: number): number => {
     return Math.floor(Math.random() * (second - first + 1)) + first;
   }
 };
-// const randomFilename = (): string => Math.floor(Math.random() * 9999999) + '.gif';
 const toYYMMDD = (date: Date): string => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 
 // main
-const actionInterval: Observable<number> = interval(7200 * 1000).pipe( // 2h
-  startWith(0)
+const actionInterval: Observable<number> = merge(
+  timer(0),
+  interval(7200 * 1000) // 2h
 );
 
 const randomDate: Observable<Date> = actionInterval.pipe(
@@ -83,7 +83,6 @@ const imgurUpload: Observable<ImgurResponse> = zip(
   flatMap(inputs => {
     const date: Date = inputs[0];
     const buffer: Buffer = inputs[1];
-    console.log(toYYMMDD(date));
     return from(imgurUploader(buffer, {title: 'Garfield ' + toYYMMDD(date)}));
   }),
   map(resp => <ImgurResponse>resp)
