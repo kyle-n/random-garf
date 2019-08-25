@@ -8,8 +8,8 @@ import {Request} from 'cross-fetch';
 import arrayBufferToBuffer from 'arraybuffer-to-buffer';
 
 // rxjs
-import { Observable, interval, from, zip, of} from 'rxjs';
-import { flatMap, map, tap, share } from 'rxjs/operators';
+import { Observable, interval, from, zip} from 'rxjs';
+import { flatMap, map, share, startWith } from 'rxjs/operators';
 
 // metadata
 const minYear = 1978;
@@ -30,7 +30,10 @@ const randomIntegerInclusive = (first: number, second?: number): number => {
 const toYYMMDD = (date: Date): string => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 
 // main
-const actionInterval: Observable<number> = interval(7200 * 1000); // 2h
+const actionInterval: Observable<number> = interval(7200 * 1000).pipe( // 2h
+  startWith(0)
+);
+
 const randomDate: Observable<Date> = actionInterval.pipe(
   map(() => {
     const today = new Date();
@@ -50,6 +53,7 @@ const randomDate: Observable<Date> = actionInterval.pipe(
   }),
   share()
 );
+
 const imgReq: Observable<Response> = randomDate.pipe(
   map(date => {
     const nonZeroIndexMonth = date.getMonth() + 1;
@@ -59,6 +63,7 @@ const imgReq: Observable<Response> = randomDate.pipe(
   }),
   flatMap(imgUrl => from(fetch(imgUrl))),
 );
+
 const imgBuffer: Observable<Buffer> = imgReq.pipe(
   flatMap(resp => from(resp.arrayBuffer())),
   map(ab => arrayBufferToBuffer(ab))
@@ -83,6 +88,7 @@ const imgurUpload: Observable<ImgurResponse> = zip(
   }),
   map(resp => <ImgurResponse>resp)
 );
+
 const iftttUpload: Observable<Response> = imgurUpload.pipe(
   flatMap(resp => {
     const reqOptions: RequestInfo = new Request(iftttUrl, {
