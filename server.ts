@@ -3,13 +3,12 @@ import dotenv from 'dotenv';
 dotenv.config({ path: __dirname + '/.env' });
 import monthDays from 'month-days';
 import imgurUploader from 'imgur-uploader';
-import fetch from 'cross-fetch';
-import {Request} from 'cross-fetch';
 import arrayBufferToBuffer from 'arraybuffer-to-buffer';
+import axios from 'axios-observable';
 
 // rxjs
-import { Observable, interval, from, zip, timer, merge} from 'rxjs';
-import { flatMap, map, share } from 'rxjs/operators';
+import { Observable, interval, from, zip, timer, merge, noop } from 'rxjs';
+import { flatMap, map, share, catchError } from 'rxjs/operators';
 
 // metadata
 const minYear = 1978;
@@ -63,7 +62,7 @@ const imgReq: Observable<Response> = randomDate.pipe(
     const twoNumberDate: string = date.getDate().toString(10).length === 1 ? '0' + date.getDate() : date.getDate().toString(10);
     return `https://d1ejxu6vysztl5.cloudfront.net/comics/garfield/${date.getFullYear()}/${date.getFullYear()}-${twoNumberMonth}-${twoNumberDate}.gif`;
   }),
-  flatMap(imgUrl => from(fetch(imgUrl))),
+  flatMap(imgUrl => from(axios.get(imgUrl)))
 );
 
 const imgBuffer: Observable<Buffer> = imgReq.pipe(
@@ -92,16 +91,15 @@ const imgurUpload: Observable<ImgurResponse> = zip(
 
 const iftttUpload: Observable<Response> = imgurUpload.pipe(
   flatMap(resp => {
-    const reqOptions: RequestInfo = new Request(iftttUrl, {
-      method: 'POST',
+    const reqOptions = {
       mode: 'cors',
       cache: 'no-cache',
       headers: {
         'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ value1: resp.title, value2: resp.link })
-    });
-    return from(fetch(reqOptions));
+      }
+    };
+    const body = { value1: resp.title, value2: resp.link };
+    return from(axios.post(iftttUrl, body, reqOptions));
   })
 );
 
@@ -118,16 +116,14 @@ finishedUploads.subscribe(
   },
   e => {
     console.log(e);
-    const reqOptions: RequestInfo = new Request(errorUrl, {
-      method: 'POST',
+    const reqOptions = {
       mode: 'cors',
       cache: 'no-cache',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ value1: 'Yo' })
-    });
-    fetch(reqOptions);
+    };
+    axios.post(errorUrl, { value1: 'Yo' }, reqOptions).subscribe(noop);
   }
 );
 

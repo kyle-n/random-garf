@@ -13,7 +13,7 @@
   "dependencies": {
     "@types/node": "^12.7.2",
     "arraybuffer-to-buffer": "0.0.7",
-    "cross-fetch": "^3.0.4",
+    "axios-observable": "^1.1.2",
     "dotenv": "^8.1.0",
     "express": "^4.17.1",
     "imgur-uploader": "^4.2.1",
