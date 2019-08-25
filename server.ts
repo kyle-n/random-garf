@@ -129,4 +129,7 @@ finishedUploads.subscribe(
   }
 );
 
-console.log('Server running...');
+// so heroku won't kill the server
+import express from 'express';
+export const app: express.Application = express();
+app.listen(process.env.PORT || 8000, () => console.log('Server running...'));
