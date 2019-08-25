@@ -29,8 +29,10 @@ const randomIntegerInclusive = (first: number, second?: number): number => {
 const toYYMMDD = (date: Date): string => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 
 // main
+const startupTime = new Date();
+const timeUntilNextTwoHourBlock: number = (startupTime.getHours() + 1) % 2 * 60 + (60 - (startupTime.getMinutes()));
 const actionInterval: Observable<number> = merge(
-  timer(0),
+  timer(timeUntilNextTwoHourBlock),
   interval(7200 * 1000) // 2h
 );
 
