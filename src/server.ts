@@ -123,5 +123,3 @@ finishedUploads.subscribe(
     fetch(reqOptions);
   }
 );
-
-console.log('Server running...');
