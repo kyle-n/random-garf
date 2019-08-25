@@ -83,7 +83,7 @@ const imgurUpload: Observable<ImgurResponse> = zip(
   flatMap(inputs => {
     const date: Date = inputs[0];
     const buffer: Buffer = inputs[1];
-    return from(imgurUploader(buffer, {title: 'Garfield ' + toYYMMDD(date)}));
+    return from(imgurUploader(buffer, {title: toYYMMDD(date)}));
   }),
   map(resp => <ImgurResponse>resp)
 );
