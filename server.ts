@@ -11,7 +11,7 @@ import fs from 'fs';
 
 // rxjs
 import { Observable, interval, from, zip, of} from 'rxjs';
-import { flatMap, map, tap } from 'rxjs/operators';
+import { flatMap, map, tap, buffer } from 'rxjs/operators';
 
 // init Twit
 const T = new Twit({
@@ -60,20 +60,23 @@ const randomDate: Observable<Date> = actionInterval.pipe(
 );
 const imgReq: Observable<Response> = randomDate.pipe(
   map(date => {
-    const currentYear: number = (new Date()).getFullYear();
     const nonZeroIndexMonth = date.getMonth() + 1;
     const twoNumberMonth: string = nonZeroIndexMonth.toString(10).length === 1 ? '0' + nonZeroIndexMonth : nonZeroIndexMonth.toString(10);
-    return `https://d1ejxu6vysztl5.cloudfront.net/comics/garfield/${currentYear}/${date.getFullYear()}-${twoNumberMonth}-${date.getDate()}.gif`;
+    return `https://d1ejxu6vysztl5.cloudfront.net/comics/garfield/${date.getFullYear()}/${date.getFullYear()}-${twoNumberMonth}-${date.getDate()}.gif`;
   }),
   flatMap(imgUrl => from(fetch(imgUrl))),
 );
-const imgFile: Observable<Buffer> = imgReq.pipe(
+const imgBuffer: Observable<Buffer> = imgReq.pipe(
   flatMap(resp => from(resp.arrayBuffer())),
-  map(ab => {
-    return <Buffer>(arrayBufferToBuffer(ab));
-  })
+  map(ab => arrayBufferToBuffer(ab))
 );
+// const iftttUpload: Observable<any> = imgBuffer.pipe(
+//   tap(buffer => {
+//     fs.writeFileSync('./x.gif', buffer);
+//   })
+// );
 
+// /*
 interface ImgurResponse {
   id: string;
   link: string;
@@ -83,7 +86,7 @@ interface ImgurResponse {
 }
 const imgurUpload: Observable<ImgurResponse> = zip(
   randomDate,
-  imgFile
+  imgBuffer 
 ).pipe(
   flatMap(inputs => {
     const date: Date = inputs[0];
@@ -106,6 +109,8 @@ const iftttUpload: Observable<Response> = imgurUpload.pipe(
     return from(fetch(reqOptions));
   })
 );
+*/
+
 iftttUpload.subscribe(
   () => {
     const now = new Date();
@@ -113,4 +118,3 @@ iftttUpload.subscribe(
   },
   console.log
 );
-
