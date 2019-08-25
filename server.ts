@@ -3,12 +3,12 @@ import dotenv from 'dotenv';
 dotenv.config({ path: __dirname + '/.env' });
 import monthDays from 'month-days';
 import imgurUploader from 'imgur-uploader';
-import arrayBufferToBuffer from 'arraybuffer-to-buffer';
 import axios from 'axios-observable';
+import { AxiosResponse } from 'axios';
 
 // rxjs
 import { Observable, interval, from, zip, timer, merge, noop } from 'rxjs';
-import { flatMap, map, share, catchError } from 'rxjs/operators';
+import { flatMap, map, share } from 'rxjs/operators';
 
 // metadata
 const minYear = 1978;
@@ -55,19 +55,18 @@ const randomDate: Observable<Date> = actionInterval.pipe(
   share()
 );
 
-const imgReq: Observable<Response> = randomDate.pipe(
+const imgReq: Observable<AxiosResponse<any>> = randomDate.pipe(
   map(date => {
     const nonZeroIndexMonth = date.getMonth() + 1;
     const twoNumberMonth: string = nonZeroIndexMonth.toString(10).length === 1 ? '0' + nonZeroIndexMonth : nonZeroIndexMonth.toString(10);
     const twoNumberDate: string = date.getDate().toString(10).length === 1 ? '0' + date.getDate() : date.getDate().toString(10);
     return `https://d1ejxu6vysztl5.cloudfront.net/comics/garfield/${date.getFullYear()}/${date.getFullYear()}-${twoNumberMonth}-${twoNumberDate}.gif`;
   }),
-  flatMap(imgUrl => from(axios.get(imgUrl)))
+  flatMap(imgUrl => from(axios.get(imgUrl, { responseType: 'arraybuffer' })))
 );
 
 const imgBuffer: Observable<Buffer> = imgReq.pipe(
-  flatMap(resp => from(resp.arrayBuffer())),
-  map(ab => arrayBufferToBuffer(ab))
+  map(resp => Buffer.from(resp.data, 'binary'))
 );
 
 interface ImgurResponse {
@@ -89,7 +88,7 @@ const imgurUpload: Observable<ImgurResponse> = zip(
   map(resp => <ImgurResponse>resp)
 );
 
-const iftttUpload: Observable<Response> = imgurUpload.pipe(
+const iftttUpload: Observable<AxiosResponse<any>> = imgurUpload.pipe(
   flatMap(resp => {
     const reqOptions = {
       mode: 'cors',
