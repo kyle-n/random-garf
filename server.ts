@@ -29,9 +29,10 @@ const toYYMMDD = (date: Date): string => `${date.getFullYear()}-${date.getMonth(
 
 // main
 const startupTime = new Date();
-const timeUntilNextTwoHourBlock: number = (startupTime.getHours() + 1) % 2 * 60 + (60 - (startupTime.getMinutes()));
+const minutesUntilNextTwoHourBlock: number = (startupTime.getHours() + 1) % 2 * 60 + (60 - (startupTime.getMinutes()));
+const msUntilNextTwoHourBlock: number = minutesUntilNextTwoHourBlock * 60 * 1000;
 const actionInterval: Observable<number> = merge(
-  timer(timeUntilNextTwoHourBlock),
+  timer(msUntilNextTwoHourBlock),
   interval(7200 * 1000) // 2h
 );
 
