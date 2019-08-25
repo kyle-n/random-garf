@@ -1,7 +1,3 @@
-import bodyParser from 'body-parser';
-import htmlParser from 'node-html-parser';
-import {parse} from 'node-html-parser';
-
 import dotenv from 'dotenv';
 dotenv.config({ path: __dirname + '/.env' });
 import monthDays from 'month-days';
