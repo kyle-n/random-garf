@@ -16,6 +16,7 @@ const minYear = 1978;
 const minMonth = 6;
 const minDay = 19;
 const iftttUrl = `https://maker.ifttt.com/trigger/new_garf/with/key/${process.env.IFTTT_KEY}`;
+const errorUrl = `https://maker.ifttt.com/trigger/garf_error/with/key/${process.env.IFTTT_KEY}`;
 
 // helpers
 const randomIntegerInclusive = (first: number, second?: number): number => {
@@ -89,7 +90,7 @@ const iftttUpload: Observable<Response> = imgurUpload.pipe(
       mode: 'cors',
       cache: 'no-cache',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ value1: resp.title, value2: resp.link })
     });
@@ -108,5 +109,17 @@ finishedUploads.subscribe(
     const now = new Date();
     console.log(`Tweet for ${toYYMMDD(date)} posted at ${toYYMMDD(now)} at ${now.getTime()}`);
   },
-  console.log
+  e => {
+    console.log(e);
+    const reqOptions: RequestInfo = new Request(errorUrl, {
+      method: 'POST',
+      mode: 'cors',
+      cache: 'no-cache',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ value1: 'Yo' })
+    });
+    fetch(reqOptions);
+  }
 );
