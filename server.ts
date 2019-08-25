@@ -2,30 +2,20 @@
 import dotenv from 'dotenv';
 dotenv.config({ path: __dirname + '/.env' });
 import monthDays from 'month-days';
-import Twit from 'twit';
 import imgurUploader from 'imgur-uploader';
 import fetch from 'cross-fetch';
 import {Request} from 'cross-fetch';
 import arrayBufferToBuffer from 'arraybuffer-to-buffer';
-import fs from 'fs';
 
 // rxjs
 import { Observable, interval, from, zip, of} from 'rxjs';
-import { flatMap, map, tap, buffer } from 'rxjs/operators';
-
-// init Twit
-const T = new Twit({
-  consumer_key: process.env.TWITTER_API_KEY,
-  consumer_secret: process.env.TWITTER_API_SECRET,
-  access_token: process.env.TWITTER_ACCESS_TOKEN,
-  access_token_secret: process.env.TWITTER_ACCESS_SECRET
-});
+import { flatMap, map, tap, share } from 'rxjs/operators';
 
 // metadata
 const minYear = 1978;
 const minMonth = 6;
 const minDay = 19;
-const iftttUrl = 'https://maker.ifttt.com/trigger/new_garf/with/key/dc2o4wOJG0kBvlUQ97rEYD'
+const iftttUrl = `https://maker.ifttt.com/trigger/new_garf/with/key/${process.env.IFTTT_KEY}`;
 
 // helpers
 const randomIntegerInclusive = (first: number, second?: number): number => {
@@ -35,11 +25,11 @@ const randomIntegerInclusive = (first: number, second?: number): number => {
     return Math.floor(Math.random() * (second - first + 1)) + first;
   }
 };
-const randomFilename = (): string => Math.floor(Math.random() * 9999999) + '.gif';
+// const randomFilename = (): string => Math.floor(Math.random() * 9999999) + '.gif';
 const toYYMMDD = (date: Date): string => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 
 // main
-const actionInterval: Observable<number> = of(0);
+const actionInterval: Observable<number> = interval(7200 * 1000); // 2h
 const randomDate: Observable<Date> = actionInterval.pipe(
   map(() => {
     const today = new Date();
@@ -56,13 +46,15 @@ const randomDate: Observable<Date> = actionInterval.pipe(
       monthDays({month: randomMonth - 1, year: randomYear})
     );
     return new Date(`${randomYear}-${randomMonth}-${randomDay}`);
-  })
+  }),
+  share()
 );
 const imgReq: Observable<Response> = randomDate.pipe(
   map(date => {
     const nonZeroIndexMonth = date.getMonth() + 1;
     const twoNumberMonth: string = nonZeroIndexMonth.toString(10).length === 1 ? '0' + nonZeroIndexMonth : nonZeroIndexMonth.toString(10);
-    return `https://d1ejxu6vysztl5.cloudfront.net/comics/garfield/${date.getFullYear()}/${date.getFullYear()}-${twoNumberMonth}-${date.getDate()}.gif`;
+    const twoNumberDate: string = date.getDate().toString(10).length === 1 ? '0' + date.getDate() : date.getDate().toString(10);
+    return `https://d1ejxu6vysztl5.cloudfront.net/comics/garfield/${date.getFullYear()}/${date.getFullYear()}-${twoNumberMonth}-${twoNumberDate}.gif`;
   }),
   flatMap(imgUrl => from(fetch(imgUrl))),
 );
@@ -70,13 +62,7 @@ const imgBuffer: Observable<Buffer> = imgReq.pipe(
   flatMap(resp => from(resp.arrayBuffer())),
   map(ab => arrayBufferToBuffer(ab))
 );
-// const iftttUpload: Observable<any> = imgBuffer.pipe(
-//   tap(buffer => {
-//     fs.writeFileSync('./x.gif', buffer);
-//   })
-// );
 
-// /*
 interface ImgurResponse {
   id: string;
   link: string;
@@ -91,6 +77,7 @@ const imgurUpload: Observable<ImgurResponse> = zip(
   flatMap(inputs => {
     const date: Date = inputs[0];
     const buffer: Buffer = inputs[1];
+    console.log(toYYMMDD(date));
     return from(imgurUploader(buffer, {title: 'Garfield ' + toYYMMDD(date)}));
   }),
   map(resp => <ImgurResponse>resp)
@@ -109,12 +96,17 @@ const iftttUpload: Observable<Response> = imgurUpload.pipe(
     return from(fetch(reqOptions));
   })
 );
-*/
 
-iftttUpload.subscribe(
-  () => {
+const finishedUploads = zip(
+  iftttUpload,
+  randomDate
+);
+
+finishedUploads.subscribe(
+  inputs => {
+    const date = inputs[1];
     const now = new Date();
-    console.log(`Tweet posted at ${toYYMMDD(now)} at ${now.getTime()}`);
+    console.log(`Tweet for ${toYYMMDD(date)} posted at ${toYYMMDD(now)} at ${now.getTime()}`);
   },
   console.log
 );

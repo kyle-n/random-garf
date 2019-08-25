@@ -18,8 +18,7 @@
     "imgur-uploader": "^4.2.1",
     "month-days": "^3.0.0",
     "nodemon": "^1.19.1",
-    "rxjs": "^6.5.2",
-    "twit": "^2.2.11"
+    "rxjs": "^6.5.2"
   },
   "devDependencies": {
     "@types/body-parser": "^1.17.1",
