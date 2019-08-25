@@ -1,11 +1,13 @@
+// npm
 import dotenv from 'dotenv';
 dotenv.config({ path: __dirname + '/.env' });
 import monthDays from 'month-days';
 import blobToBase64 from 'blob-to-base64';
 import Twit from 'twit';
 
-import {Observable, interval, from, zip} from 'rxjs';
-import {flatMap, map} from 'rxjs/operators';
+// rxjs
+import { Observable, interval, from, zip, of} from 'rxjs';
+import { flatMap, map } from 'rxjs/operators';
 
 // init Twit
 const T = new Twit({
@@ -27,10 +29,10 @@ const randomIntegerInclusive = (first: number, second?: number): number => {
   } else {
     return Math.floor(Math.random() * (second - first + 1)) + first;
   }
-}
+};
 
 // main
-const actionInterval: Observable<number> = interval(2 * 1000);
+const actionInterval: Observable<number> = of(0);
 const randomDate: Observable<Date> = actionInterval.pipe(
   map(() => {
     const today = new Date();
@@ -62,7 +64,7 @@ const mediaId: Observable<string> = imgReq.pipe(
   flatMap(resp => from(resp.blob())),
   map(blob => blobToBase64(blob)),
   flatMap(b64content => from(T.post('media/upload', { media_data: b64content }))),
-  map((data: any) => data.media_id_string)
+  map((data: {media_id_string: string}) => data.media_id_string)
 );
 const createMetadataRequest: Observable<any> = mediaId.pipe(
   flatMap(mediaId => {
