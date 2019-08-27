@@ -27,7 +27,7 @@ const randomIntegerInclusive = (first: number, second?: number): number => {
 };
 const toYYMMDD = (date: Date): string => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 
-// main
+// interval to drive program
 const startupTime = new Date();
 const minutesUntilNextTwoHourBlock: number = (startupTime.getHours() + 1) % 2 * 60 + (60 - (startupTime.getMinutes()));
 const msUntilNextTwoHourBlock: number = minutesUntilNextTwoHourBlock * 60 * 1000;
@@ -36,6 +36,7 @@ const actionInterval: Observable<number> = merge(
   interval(7200 * 1000) // 2h
 );
 
+// generate random date between Garfield creation and today
 const randomDate: Observable<Date> = actionInterval.pipe(
   map(() => {
     const today = new Date();
@@ -56,6 +57,7 @@ const randomDate: Observable<Date> = actionInterval.pipe(
   share()
 );
 
+// grab the image from the site's servers
 const imgReq: Observable<AxiosResponse<any>> = randomDate.pipe(
   map(date => {
     const nonZeroIndexMonth = date.getMonth() + 1;
@@ -66,10 +68,12 @@ const imgReq: Observable<AxiosResponse<any>> = randomDate.pipe(
   flatMap(imgUrl => from(axios.get(imgUrl, { responseType: 'arraybuffer' })))
 );
 
+// transform into something to upload to imgur
 const imgBuffer: Observable<Buffer> = imgReq.pipe(
   map(resp => Buffer.from(resp.data, 'binary'))
 );
 
+// upload to imgur for sending to IFTTT
 interface ImgurResponse {
   id: string;
   link: string;
@@ -89,6 +93,7 @@ const imgurUpload: Observable<ImgurResponse> = zip(
   map(resp => <ImgurResponse>resp)
 );
 
+// Use IFTTT so as not to implement the whole Twitter auth stack
 const iftttUpload: Observable<AxiosResponse<any>> = imgurUpload.pipe(
   flatMap(resp => {
     const reqOptions = {
@@ -103,17 +108,20 @@ const iftttUpload: Observable<AxiosResponse<any>> = imgurUpload.pipe(
   })
 );
 
+// final sub to listen to
 const finishedUploads = zip(
   iftttUpload,
   randomDate
 );
 
 finishedUploads.subscribe(
+  // logs for my server records
   inputs => {
     const date = inputs[1];
     const now = new Date();
     console.log(`Tweet for ${toYYMMDD(date)} posted at ${toYYMMDD(now)} at ${now.getTime()}`);
   },
+  // pings me if there's a problem
   e => {
     console.log(e);
     const reqOptions = {
@@ -123,7 +131,7 @@ finishedUploads.subscribe(
         'Content-Type': 'application/json'
       },
     };
-    axios.post(errorUrl, { value1: 'Yo' }, reqOptions).subscribe(noop);
+    axios.post(errorUrl, { value1: '@kbn_au LASAGNA TIME' }, reqOptions).subscribe(noop);
   }
 );
 
