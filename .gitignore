@@ -4,4 +4,4 @@ dist/*.js*
 *.swo
 *.gif
 *.png
-
+.DS_STORE
