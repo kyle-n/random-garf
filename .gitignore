@@ -5,3 +5,4 @@ dist/*.js*
 *.gif
 *.png
 .DS_STORE
+dist/.env

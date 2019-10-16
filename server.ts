@@ -50,7 +50,8 @@ const randomDate: Observable<Date> = actionInterval.pipe(
     );
     const randomDay = randomIntegerInclusive(
       randomYear === minYear && randomMonth === minMonth ? minDay : 1,
-      monthDays({month: randomMonth - 1, year: randomYear})
+      randomYear === today.getFullYear() && randomMonth === today.getMonth() + 1 ?
+        today.getDate() : monthDays({month: randomMonth - 1, year: randomYear})
     );
     return new Date(`${randomYear}-${randomMonth}-${randomDay}`);
   }),
