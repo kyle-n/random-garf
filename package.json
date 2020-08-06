@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/server.js",
   "scripts": {
-    "start": "tsc && nodemon dist/server.js",
+    "start": "tsc && nodemon dist/server.js &",
     "build": "npm i -g typescript nodemon"
   },
   "keywords": [],
