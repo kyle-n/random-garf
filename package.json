@@ -2,9 +2,9 @@
   "name": "random-garf",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/server.js",
+  "main": "dist/lasagnabot.js",
   "scripts": {
-    "start": "tsc && nodemon dist/server.js &",
+    "start": "tsc && nodemon dist/lasagnabot.js &",
     "build": "npm i -g typescript nodemon"
   },
   "keywords": [],
