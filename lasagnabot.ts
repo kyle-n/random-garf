@@ -33,7 +33,7 @@ const startupTime = new Date();
 const minutesUntilNextTwoHourBlock: number = (startupTime.getHours() + 1) % 2 * 60 + (60 - (startupTime.getMinutes()));
 const msUntilNextTwoHourBlock: number = minutesUntilNextTwoHourBlock * 60 * 1000;
 const actionInterval: Observable<number> = merge(
-  timer(0),
+  timer(msUntilNextTwoHourBlock),
   interval(7200 * 1000) // 2h
 );
 
