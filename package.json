@@ -11,19 +11,19 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/node": "^12.7.2",
     "axios": "^0.19.0",
     "axios-observable": "^1.1.2",
     "dotenv": "^8.1.0",
     "express": "^4.17.1",
     "imgur-uploader": "^4.2.1",
     "month-days": "^3.0.0",
-    "nodemon": "^1.19.1",
     "rxjs": "^6.5.2"
   },
   "devDependencies": {
+    "@types/node": "^12.7.2",
     "@types/body-parser": "^1.17.1",
     "@types/express": "^4.17.1",
+    "nodemon": "^1.19.1",
     "typescript": "^3.5.3"
   }
 }
