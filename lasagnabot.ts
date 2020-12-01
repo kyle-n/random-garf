@@ -5,6 +5,7 @@ import monthDays from 'month-days';
 import imgurUploader from 'imgur-uploader';
 import axios from 'axios-observable';
 import { AxiosResponse } from 'axios';
+import { JSDOM } from 'jsdom';
 
 // rxjs
 import { Observable, interval, from, zip, timer, merge, noop } from 'rxjs';
@@ -32,7 +33,7 @@ const startupTime = new Date();
 const minutesUntilNextTwoHourBlock: number = (startupTime.getHours() + 1) % 2 * 60 + (60 - (startupTime.getMinutes()));
 const msUntilNextTwoHourBlock: number = minutesUntilNextTwoHourBlock * 60 * 1000;
 const actionInterval: Observable<number> = merge(
-  timer(msUntilNextTwoHourBlock),
+  timer(0),
   interval(7200 * 1000) // 2h
 );
 
@@ -64,9 +65,12 @@ const imgReq: Observable<AxiosResponse<any>> = randomDate.pipe(
     const nonZeroIndexMonth = date.getMonth() + 1;
     const twoNumberMonth: string = nonZeroIndexMonth.toString(10).length === 1 ? '0' + nonZeroIndexMonth : nonZeroIndexMonth.toString(10);
     const twoNumberDate: string = date.getDate().toString(10).length === 1 ? '0' + date.getDate() : date.getDate().toString(10);
-    return `https://d1ejxu6vysztl5.cloudfront.net/comics/garfield/${date.getFullYear()}/${date.getFullYear()}-${twoNumberMonth}-${twoNumberDate}.gif`;
+    return `https://www.gocomics.com/garfield/${date.getFullYear()}/${twoNumberMonth}/${twoNumberDate}`;
   }),
-  flatMap(imgUrl => from(axios.get(imgUrl, { responseType: 'arraybuffer' })))
+  flatMap(url => axios.get(url, {responseType: 'document'})),
+  map(response => new JSDOM(response.data)),
+  map(dom => dom.window.document.querySelector('meta[property="og:image"]').getAttribute('content')),
+  flatMap(imgUrl => axios.get(imgUrl, { responseType: 'arraybuffer' }))
 );
 
 // transform into something to upload to imgur
@@ -84,7 +88,7 @@ interface ImgurResponse {
 }
 const imgurUpload: Observable<ImgurResponse> = zip(
   randomDate,
-  imgBuffer 
+  imgBuffer
 ).pipe(
   flatMap(inputs => {
     const date: Date = inputs[0];
@@ -105,7 +109,7 @@ const iftttUpload: Observable<AxiosResponse<any>> = imgurUpload.pipe(
       }
     };
     const body = { value1: resp.title, value2: resp.link };
-    return from(axios.post(iftttUrl, body, reqOptions));
+    return axios.post(iftttUrl, body, reqOptions);
   })
 );
 
@@ -135,8 +139,3 @@ finishedUploads.subscribe(
     axios.post(errorUrl, { value1: '@kbn_au LASAGNA TIME' }, reqOptions).subscribe(noop);
   }
 );
-
-// so heroku won't kill the server
-import express from 'express';
-export const app: express.Application = express();
-app.listen(process.env.PORT || 8000, () => console.log('Server running...'));
