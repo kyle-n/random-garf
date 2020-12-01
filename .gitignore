@@ -6,3 +6,4 @@ dist/*.js*
 *.png
 .DS_STORE
 dist/.env
+.idea
