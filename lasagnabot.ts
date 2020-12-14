@@ -8,8 +8,8 @@ import { AxiosResponse } from 'axios';
 import { JSDOM } from 'jsdom';
 
 // rxjs
-import { Observable, interval, from, zip, timer, merge, noop } from 'rxjs';
-import { flatMap, map, share } from 'rxjs/operators';
+import {Observable, interval, from, zip, timer, merge, noop, of} from 'rxjs';
+import {catchError, filter, flatMap, map, share} from 'rxjs/operators';
 
 // metadata
 const minYear = 1978;
@@ -70,7 +70,12 @@ const imgReq: Observable<AxiosResponse<any>> = randomDate.pipe(
   flatMap(url => axios.get(url, {responseType: 'document'})),
   map(response => new JSDOM(response.data)),
   map(dom => dom.window.document.querySelector('meta[property="og:image"]').getAttribute('content')),
-  flatMap(imgUrl => axios.get(imgUrl, { responseType: 'arraybuffer' }))
+  flatMap(imgUrl => axios.get(imgUrl, { responseType: 'arraybuffer' })),
+  catchError(e => {
+    console.log(e);
+    return of(null);
+  }),
+  filter(val => Boolean(val))
 );
 
 // transform into something to upload to imgur
@@ -95,7 +100,12 @@ const imgurUpload: Observable<ImgurResponse> = zip(
     const buffer: Buffer = inputs[1];
     return from(imgurUploader(buffer, {title: toYYMMDD(date)}));
   }),
-  map(resp => <ImgurResponse>resp)
+  catchError(e => {
+    console.log(e);
+    return of(null);
+  }),
+  filter(val => Boolean(val)),
+  map(resp => resp as ImgurResponse)
 );
 
 // Use IFTTT so as not to implement the whole Twitter auth stack
@@ -110,7 +120,12 @@ const iftttUpload: Observable<AxiosResponse<any>> = imgurUpload.pipe(
     };
     const body = { value1: resp.title, value2: resp.link };
     return axios.post(iftttUrl, body, reqOptions);
-  })
+  }),
+  catchError(e => {
+    console.log(e);
+    return of(null);
+  }),
+  filter(val => Boolean(val))
 );
 
 // final sub to listen to
